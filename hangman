@@ -1,8 +1,77 @@
 #!/usr/bin/ruby
 
+class Hangman
+  def initialize(input_filename)
+    @file = File.read(input_filename).split("\n")
+  end
+
+  def play
+    while input = @file.shift
+      if input.length > 1
+        set_up_new_game(input)
+      elsif input.length == 1
+        guess(input)
+      end
+    end
+  end
+
+  def set_up_new_game(word)
+    @word = word
+    @lives = 6
+    @bad_guesses = []
+    @screen = "#{'_' * word.length}"
+    puts "#{@screen} life left: #{@lives}"
+  end
+
+  def guess(letter)
+    if @word.include?(letter)
+      indices = find_letter_indices(@word, letter, 0)
+      indices.each { |i| @screen[i] = letter }
+    else
+      @lives -= 1
+      @bad_guesses << letter
+    end
+    update_game_progress
+  end
+
+  def find_letter_indices(word, letter, offset)
+    return [] unless index = word.index(letter, offset)
+    return [index] + find_letter_indices(word, letter, index + 1)
+  end
+
+  def update_game_progress
+    if is_end_game?
+      end_game
+    else
+      puts "#{@screen} life left: #{@lives}" + bad_guesses_string
+    end
+  end
+
+  def bad_guesses_string
+    if @bad_guesses.any?
+      " incorrect guesses: #{@bad_guesses.join}"
+    else
+      ""
+    end
+  end
+
+  def end_game
+    if @screen.gsub('_', '') == @screen
+      puts "#{@screen} YOU WIN!"
+    else
+      puts "#{@screen} YOU LOSE!"
+    end
+  end
+
+  def is_end_game?
+    @screen.gsub('_', '') == @screen || @lives == 0
+  end
+end
 # This program can be run like this:
 # ./hangman input.txt
 
 input_filename = ARGV[0]
+game = Hangman.new(input_filename).play
 
 # Put your code here
+#
